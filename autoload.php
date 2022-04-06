@@ -1,17 +1,32 @@
 <?php
-/**
- * Registers the autoloader for classes
- *
- * @author	Michiel Tramper - https://www.makeitworkpress.com
- * @todo	Make the autoloader comply with the coding standards of WordPress
- */
-spl_autoload_register( function($classname) {
 
-    $class     = str_replace( '\\', DIRECTORY_SEPARATOR, str_replace( '_', '-', strtolower($classname) ) );
-    
-    $file_path = get_template_directory() . DIRECTORY_SEPARATOR . $class . '.php';
-    
-    if ( file_exists( $file_path ) )
-        require_once $file_path;
-  
-} );
+namespace DP;
+
+final class Autoloader {
+    private $namespace;
+    private $filepath;
+
+    public function __construct($namespace, $filepath) {
+        $this->namespace = $namespace;
+        $this->filepath = $filepath;
+
+        spl_autoload_register(array($this, 'callback'));
+    }
+
+    public function callback($class) {
+        $namespace = $this->namespace;
+
+        if (strpos($class, $namespace) !== 0) {
+            return;
+        }
+
+        $class = str_replace($namespace, '', $class);
+        $class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+
+        $file = untrailingslashit($this->filepath) . DIRECTORY_SEPARATOR .  $class . '.php';
+
+        if (file_exists($file)) {
+            require_once($file);
+        }
+    }
+}
